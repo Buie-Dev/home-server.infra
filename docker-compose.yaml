@@ -1,0 +1,51 @@
+version: '3.8'
+
+networks:
+  home-server:
+    driver: bridge
+    name: home-server
+
+
+
+services:
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: mongodb
+  #   networks:
+  #     - home-server
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=your_username  # Replace with your username
+  #     - MONGO_INITDB_ROOT_PASSWORD=your_password  # Replace with your password
+  #   volumes:
+  #     - mongo_data:/data/db
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    networks:
+      - home-server
+    ports:
+      - 1883:1883   # MQTT port
+      - 9001:9001   # WebSocket port (optional)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    # depends_on:
+      # - mongodb
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: node-red
+    networks:
+      - home-server
+    ports:
+      - 1880:1880
+    environment:
+      - TZ=UTC
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./node-red/data:/data
