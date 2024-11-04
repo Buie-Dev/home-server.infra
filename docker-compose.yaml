@@ -8,18 +8,51 @@ networks:
 
 
 services:
-  # mongodb:
-  #   image: mongo:latest
-  #   container_name: mongodb
-  #   networks:
-  #     - home-server
-  #   ports:
-  #     - "27017:27017"
-  #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=your_username  # Replace with your username
-  #     - MONGO_INITDB_ROOT_PASSWORD=your_password  # Replace with your password
-  #   volumes:
-  #     - mongo_data:/data/db
+  mysql:
+    image: mysql:latest
+    container_name: mysqldb 
+    networks:
+      - home-server
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE: home_server_db
+      MYSQL_USER: mbuie
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    secrets:
+      - mysql_root_password
+      - mysql_user_password
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root --password=$(cat /run/secrets/mysql_root_password)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    networks:
+      - home-server
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongo_root_username
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password
+    volumes:
+      - mongo_data:/data/db
+    secrets:
+      - mongo_root_username
+      - mongo_root_password
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
 
   mosquitto:
     image: eclipse-mosquitto:latest
@@ -33,8 +66,14 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-    # depends_on:
-      # - mongodb
+    depends_on:
+      - mongodb
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   nodered:
     image: nodered/node-red:latest
@@ -49,3 +88,26 @@ services:
       - mosquitto
     volumes:
       - ./node-red/data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1880"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+
+
+secrets:
+  mongo_root_username:
+    file: ./secrets/mongo_root_username.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_user_password:
+    file: ./secrets/mysql_user_password.txt
+
+volumes:
+  mongo_data:
+    driver: local
+  mysql_data:
