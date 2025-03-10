@@ -39,27 +39,6 @@
         "sessionExpiry": ""
     },
     {
-        "id": "8aea1bf57ebf2f2c",
-        "type": "mqtt in",
-        "z": "710b9dc8670f84bd",
-        "name": "",
-        "topic": "Test",
-        "qos": "2",
-        "datatype": "json",
-        "broker": "d6d39866dee63fd8",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 250,
-        "y": 340,
-        "wires": [
-            [
-                "3920844b37ceed03"
-            ]
-        ]
-    },
-    {
         "id": "3920844b37ceed03",
         "type": "debug",
         "z": "710b9dc8670f84bd",
@@ -76,79 +55,40 @@
         "wires": []
     },
     {
-        "id": "2feb22a179fc10e8",
-        "type": "mqtt out",
-        "z": "710b9dc8670f84bd",
-        "name": "",
-        "topic": "Test",
-        "qos": "",
-        "retain": "",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "d6d39866dee63fd8",
-        "x": 510,
-        "y": 480,
-        "wires": []
-    },
-    {
-        "id": "179dd6262371faa2",
+        "id": "902ea2ce7b089c71",
         "type": "inject",
         "z": "710b9dc8670f84bd",
-        "name": "",
+        "name": "Zone 1",
         "props": [
             {
                 "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
             }
         ],
         "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 200,
-        "y": 480,
-        "wires": [
-            [
-                "2feb22a179fc10e8"
-            ]
-        ]
-    },
-    {
-        "id": "b43b2bb1a6e173e6",
-        "type": "inject",
-        "z": "710b9dc8670f84bd",
-        "name": "action",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "{\"priority\":90,\"start_time\":123123,\"running_time\":300,\"request_time\":100000,\"actions\":[]}",
+        "topic": "irrigation/request",
+        "payload": "{\"priority\":3,\"duration\":15,\"zone\":1,\"subzones\":[{\"id\":1,\"state\":1},{\"id\":2,\"state\":0},{\"id\":3,\"state\":0},{\"id\":4,\"state\":1},{\"id\":5,\"state\":0},{\"id\":6,\"state\":0}]}",
         "payloadType": "json",
-        "x": 130,
-        "y": 580,
+        "x": 150,
+        "y": 700,
         "wires": [
             [
-                "9da92b842b471ddb"
+                "2f7acb19fd69d188"
             ]
         ]
     },
     {
-        "id": "9da92b842b471ddb",
+        "id": "2f7acb19fd69d188",
         "type": "mqtt out",
         "z": "710b9dc8670f84bd",
-        "name": "",
-        "topic": "action",
+        "name": "Irrigation Request",
+        "topic": "irrigation/request",
         "qos": "",
         "retain": "",
         "respTopic": "",
@@ -157,16 +97,301 @@
         "correl": "",
         "expiry": "",
         "broker": "d6d39866dee63fd8",
-        "x": 510,
-        "y": 580,
+        "x": 550,
+        "y": 700,
         "wires": []
     },
     {
-        "id": "c016783398539e41",
+        "id": "b9be4fe49934918e",
         "type": "mqtt in",
         "z": "710b9dc8670f84bd",
         "name": "",
-        "topic": "action",
+        "topic": "healthcheck/request",
+        "qos": "2",
+        "datatype": "utf8",
+        "broker": "d6d39866dee63fd8",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 290,
+        "y": 280,
+        "wires": [
+            [
+                "3920844b37ceed03"
+            ]
+        ]
+    },
+    {
+        "id": "ab7e1e447f365578",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 2",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 1, \"duration\": 15, \"zone\": 2}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 740,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "d13830d917ede5fe",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 7",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 0, \"duration\": 15, \"zone\": 7}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 940,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "b3c1ebcc9c70f25f",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 6",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 4, \"duration\": 15, \"zone\": 6}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 900,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "bea88b9c89609a02",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 5",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 5}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 860,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "3927e9add5aeacc6",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 4",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 4}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 820,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "9303ea6bb266705a",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 3",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 3}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 780,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "7f5b9753e8fa070d",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 8",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 8}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 980,
+        "wires": [
+            [
+                "2f7acb19fd69d188"
+            ]
+        ]
+    },
+    {
+        "id": "d60c4e22256d4746",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "health check request",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "Healthcheck Requested",
+        "payloadType": "str",
+        "x": 150,
+        "y": 1480,
+        "wires": [
+            [
+                "d61653214c9802ac"
+            ]
+        ]
+    },
+    {
+        "id": "1ec35a6b0f0f0c61",
+        "type": "mqtt out",
+        "z": "710b9dc8670f84bd",
+        "name": "Irrigation Request",
+        "topic": "irrigation/request",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d6d39866dee63fd8",
+        "x": 550,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "d61653214c9802ac",
+        "type": "mqtt out",
+        "z": "710b9dc8670f84bd",
+        "name": "Healthcheck Request",
+        "topic": "healthcheck/request",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d6d39866dee63fd8",
+        "x": 600,
+        "y": 1460,
+        "wires": []
+    },
+    {
+        "id": "16e87a97c84cf7f4",
+        "type": "mqtt in",
+        "z": "710b9dc8670f84bd",
+        "name": "",
+        "topic": "healthcheck/response",
         "qos": "2",
         "datatype": "json",
         "broker": "d6d39866dee63fd8",
@@ -174,8 +399,329 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 250,
-        "y": 400,
+        "x": 300,
+        "y": 360,
+        "wires": [
+            [
+                "3920844b37ceed03"
+            ]
+        ]
+    },
+    {
+        "id": "9a63f51fa0fd9866",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 9",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 9}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 1040,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "7bda3065e53c5c54",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 10",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 10}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1080,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "e47ad0702d99304f",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 11",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 11}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1120,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "c73354d83fea01b6",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 12",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 12}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1160,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "2ba4b85f17a0d5a1",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 13",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 13}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1200,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "6b6f2eb6bbbbf7b2",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 14",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 14}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1240,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "57a2c3f118c71b03",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 15",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 3, \"duration\": 15, \"zone\": 15}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1280,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "50579f91f0ca224c",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "Zone 16",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/request",
+        "payload": "{\"priority\": 1, \"duration\": 15, \"zone\": 16}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 1320,
+        "wires": [
+            [
+                "1ec35a6b0f0f0c61"
+            ]
+        ]
+    },
+    {
+        "id": "6e4fbdd87116dec7",
+        "type": "inject",
+        "z": "710b9dc8670f84bd",
+        "name": "setCurrentState",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "irrigation/currentState",
+        "payload": "[{\"id\":1,\"state\":0,\"subzones\":[{\"id\":1,\"state\":0},{\"id\":2,\"state\":0},{\"id\":3,\"state\":0},{\"id\":4,\"state\":0},{\"id\":5,\"state\":0},{\"id\":6,\"state\":0}]},{\"id\":2,\"state\":0},{\"id\":3,\"state\":0},{\"id\":4,\"state\":0},{\"id\":5,\"state\":0},{\"id\":6,\"state\":0},{\"id\":7,\"state\":0},{\"id\":8,\"state\":0},{\"id\":9,\"state\":0},{\"id\":10,\"state\":0},{\"id\":11,\"state\":0},{\"id\":12,\"state\":0},{\"id\":13,\"state\":0},{\"id\":14,\"state\":0},{\"id\":15,\"state\":0},{\"id\":16,\"state\":0}]",
+        "payloadType": "json",
+        "x": 140,
+        "y": 540,
+        "wires": [
+            [
+                "7f0e3120bd406c5e"
+            ]
+        ]
+    },
+    {
+        "id": "7f0e3120bd406c5e",
+        "type": "mqtt out",
+        "z": "710b9dc8670f84bd",
+        "name": "setCurrentState",
+        "topic": "irrigation/currentState",
+        "qos": "2",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d6d39866dee63fd8",
+        "x": 560,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "771875e2d8c398f9",
+        "type": "mqtt in",
+        "z": "710b9dc8670f84bd",
+        "name": "currentState",
+        "topic": "irrigation/currentState",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "d6d39866dee63fd8",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 290,
+        "y": 200,
+        "wires": [
+            [
+                "3920844b37ceed03"
+            ]
+        ]
+    },
+    {
+        "id": "f0d53d494a60329b",
+        "type": "mqtt in",
+        "z": "710b9dc8670f84bd",
+        "name": "",
+        "topic": "irrigation/request",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "d6d39866dee63fd8",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 280,
+        "y": 440,
         "wires": [
             [
                 "3920844b37ceed03"
