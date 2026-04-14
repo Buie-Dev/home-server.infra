@@ -120,15 +120,12 @@ services:
     image: ngrok/ngrok:latest
     container_name: ngrok
     restart: unless-stopped
-    networks:
-      - home-server
+    network_mode: host
     env_file:
       - .env
-    command: http --url=${NGROK_API_DOMAIN} nginx-gateway:80
+    command: http --url=${NGROK_API_DOMAIN} localhost:8080
     depends_on:
       - nginx
-    ports:
-      - "4040:4040"
 
 
 
