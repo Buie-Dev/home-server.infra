@@ -124,6 +124,8 @@ services:
     env_file:
       - .env
     command: http --log=stdout --log-level=info --url=${NGROK_API_DOMAIN} localhost:8080
+    volumes:
+      - ./ngrok/resolv.conf:/etc/resolv.conf:ro
     depends_on:
       - nginx
 
