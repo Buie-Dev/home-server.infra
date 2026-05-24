@@ -19,6 +19,7 @@ services:
       MYSQL_DATABASE: home_server_db
       MYSQL_USER: mbuie
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      TZ: America/Vancouver
     ports:
       - "3307:3306"
     volumes:
@@ -43,6 +44,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongo_root_username
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password
+      - TZ=America/Vancouver
     volumes:
       - mongo_data:/data/db
     secrets:
@@ -65,6 +67,8 @@ services:
     ports:
       - 1883:1883   # MQTT port
       - 9001:9001   # WebSocket port (optional)
+    environment:
+      - TZ=America/Vancouver
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
@@ -86,7 +90,7 @@ services:
     ports:
       - 1880:1880
     environment:
-      - TZ=UTC
+      - TZ=America/Vancouver
     depends_on:
       - mosquitto
     volumes:
@@ -106,6 +110,8 @@ services:
       - home-server
     ports:
       - "8080:80"
+    environment:
+      - TZ=America/Vancouver
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     extra_hosts:

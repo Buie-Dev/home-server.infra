@@ -1242,5 +1242,26 @@
                 "67708aa21b2f2768"
             ]
         ]
+    },
+    {
+        "id": "981da819af29a0c9",
+        "type": "mqtt in",
+        "z": "710b9dc8670f84bd",
+        "name": "",
+        "topic": "irrigation/flow",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "d6d39866dee63fd8",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 290,
+        "y": 20,
+        "wires": [
+            [
+                "3920844b37ceed03"
+            ]
+        ]
     }
 ]
