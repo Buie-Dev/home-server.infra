@@ -136,7 +136,7 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
   MOBILE APP  (iPhone / Android)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  HomeApp reads REACT_APP_NGROK_DOMAIN from .env
+  HomeApp reads REACT_APP_DOMAIN from .env
 
   If set:
     REST calls  → https://your-domain.ngrok-free.app/
@@ -300,7 +300,7 @@ Both values come from your ngrok account. The authtoken and domain must belong t
 To route the app through ngrok (required when away from home):
 
 ```
-REACT_APP_NGROK_DOMAIN=your-domain.ngrok-free.app
+REACT_APP_DOMAIN=your-domain.ngrok-free.app
 ```
 
 When this is set, all REST and WebSocket traffic goes through ngrok. When it is commented out, the app connects directly to `192.168.1.14` on the local network.
