@@ -114,7 +114,7 @@ services:
       - TZ=America/Vancouver
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../HomeApp.web/dist:/usr/share/nginx/html:ro
+      - ../homeapp.web/dist:/usr/share/nginx/html:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
