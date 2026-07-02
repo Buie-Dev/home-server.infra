@@ -122,19 +122,6 @@ services:
       timeout: 10s
       retries: 3
 
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok
-    restart: unless-stopped
-    network_mode: host
-    env_file:
-      - .env
-    command: http --log=stdout --log-level=info --url=${NGROK_API_DOMAIN} localhost:8080
-    volumes:
-      - ./ngrok/resolv.conf:/etc/resolv.conf:ro
-    depends_on:
-      - nginx
-
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared

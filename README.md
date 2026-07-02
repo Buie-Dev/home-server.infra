@@ -9,7 +9,7 @@ Docker Compose stack for shared home server infrastructure. Start this repo firs
 - [Quick Start](#quick-start)
 - [Services](#services)
 - [Definitions](#definitions)
-- [nginx / ngrok Architecture](#nginx--ngrok-architecture)
+- [nginx / Cloudflare Architecture](#nginx--cloudflare-architecture)
   - [The Problem It Solves](#the-problem-it-solves)
   - [Full Traffic Flow Diagram](#full-traffic-flow-diagram)
   - [Component Deep Dive](#component-deep-dive)
@@ -22,7 +22,7 @@ Docker Compose stack for shared home server infrastructure. Start this repo firs
 ## Quick Start
 
 ```bash
-cp .env.example .env    # fill in NGROK_AUTHTOKEN and NGROK_API_DOMAIN
+cp .env.example .env    # fill in CLOUDFLARE_TUNNEL_TOKEN
 docker compose up -d
 ```
 
@@ -37,7 +37,7 @@ docker compose up -d
 | `mosquitto` | eclipse-mosquitto | 1883, 9001 | MQTT broker |
 | `node-red` | nodered/node-red | 1880 | Flow-based automation UI |
 | `nginx-gateway` | nginx | 8080 | Reverse proxy — routes HTTP + WebSocket |
-| `ngrok` | ngrok/ngrok | 4040 (dashboard) | Exposes nginx to the internet via a static domain |
+| `cloudflared` | cloudflare/cloudflared | — | Exposes nginx to the internet via Cloudflare Tunnel (dandelionlane.ca) |
 
 ---
 
@@ -90,27 +90,23 @@ Benefits of using nginx:
 - Handles WebSocket upgrade headers automatically
 - Easy to add more services behind it later without changing the app
 
-### Tunneling (ngrok)
+### Tunneling (Cloudflare)
 
 The home server sits on a private home network. Its IP address is not reachable from the internet — your router's firewall blocks all unsolicited inbound traffic, and your ISP assigns a dynamic public IP that changes.
 
-**ngrok** solves this by creating a **tunnel**: a persistent outbound connection from your server to ngrok's cloud. Since the connection is outbound (your server calls out to ngrok, not the other way around), it passes through the firewall. ngrok's cloud then accepts inbound traffic on a public URL and forwards it down the tunnel to your server.
+**Cloudflare Tunnel** solves this by creating a **tunnel**: a persistent outbound connection from your server to Cloudflare's edge. Since the connection is outbound (your server calls out to Cloudflare, not the other way around), it passes through the firewall. Cloudflare then accepts inbound traffic on your custom domain and forwards it down the tunnel to your server.
 
-**Static domain** — ngrok free accounts get a permanent subdomain (e.g. `badgerly-nonmeteorologic-tonya.ngrok-free.dev`) that never changes. The mobile app can be hardcoded to this address.
-
-**ngrok dashboard** — A web UI at `http://<server>:4040` that shows active tunnels and lets you inspect every HTTP request that passes through in real time. Useful for debugging.
+**Custom domain** — `dandelionlane.ca` is a permanent domain managed via Cloudflare DNS. The mobile app is hardcoded to this address.
 
 ### DNS
 
-**DNS (Domain Name System)** translates human-readable domain names (like `connect.ngrok-agent.com`) into IP addresses (like `52.53.75.151`) that computers use to connect to each other.
+**DNS (Domain Name System)** translates human-readable domain names into IP addresses that computers use to connect to each other.
 
 **DNS server** — The server that does the translation. Your home router (`192.168.1.254`) acts as a local DNS server and forwards requests to your ISP's DNS upstream.
 
-**The DNS issue in this project** — The ngrok Docker image ships with a pre-written `/etc/resolv.conf` pointing to Google's DNS (`8.8.8.8`). This ISP blocks direct queries to external DNS servers (UDP port 53 to `8.8.8.8` is silently dropped). ngrok hangs silently because it can't resolve `connect.ngrok-agent.com`. The fix is to override the container's `/etc/resolv.conf` with one that points to the local router, which is not blocked.
-
 ---
 
-## nginx / ngrok Architecture
+## nginx / Cloudflare Architecture
 
 ### The Problem It Solves
 
@@ -123,8 +119,8 @@ When the phone is at home on WiFi, it can reach these directly by IP. When it's 
 The solution:
 
 ```
-nginx   — single entry point, routes /ws to WebSocket and /* to REST
-ngrok   — punches through the firewall, gives a permanent public HTTPS URL
+nginx       — single entry point, routes /ws to WebSocket and /* to REST
+cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
 ```
 
 ---
@@ -139,8 +135,8 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
   HomeApp reads REACT_APP_DOMAIN from .env
 
   If set:
-    REST calls  → https://your-domain.ngrok-free.app/
-    WebSocket   → wss://your-domain.ngrok-free.app/ws
+    REST calls  → https://dandelionlane.ca/api
+    WebSocket   → wss://dandelionlane.ca/ws
 
   If NOT set (LAN only):
     REST calls  → http://192.168.1.14:5001/
@@ -154,14 +150,14 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
          ▼
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  NGROK CLOUD  (ngrok's servers, hosted on AWS)
+  CLOUDFLARE EDGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Receives traffic at the static public URL.
-  Forwards it down the persistent tunnel to the ngrok agent
+  Receives traffic at dandelionlane.ca.
+  Forwards it down the persistent tunnel to the cloudflared agent
   running on the home server.
 
-  Public URL:   https://your-domain.ngrok-free.app
+  Public URL:   https://dandelionlane.ca
   Terminates TLS here — traffic inside the tunnel is plain HTTP.
 
          │  HTTP (unencrypted, inside encrypted tunnel)
@@ -173,18 +169,11 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ┌──────────────────────────────────────────────────────────────┐
-  │  ngrok container                                             │
-  │  network_mode: host  (shares host network stack directly)   │
+  │  cloudflared container                   [home-server net]  │
   │                                                              │
-  │  • Maintains outbound tunnel to ngrok cloud                  │
-  │  • Receives forwarded traffic from the cloud                 │
-  │  • Forwards it to localhost:8080 (nginx on host port 8080)  │
-  │                                                              │
-  │  Dashboard:  http://192.168.1.14:4040                        │
-  │                                                              │
-  │  DNS fix:  ./ngrok/resolv.conf → /etc/resolv.conf           │
-  │    nameserver 192.168.1.254  (local router — not blocked)   │
-  │    (default 8.8.8.8 is blocked by ISP on UDP port 53)       │
+  │  • Maintains outbound tunnel to Cloudflare edge             │
+  │  • Receives forwarded traffic from Cloudflare               │
+  │  • Forwards it to nginx on the home-server network          │
   └───────────────────────┬──────────────────────────────────────┘
                           │  HTTP  →  localhost:8080
                           │
@@ -243,17 +232,13 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
 
 ### Component Deep Dive
 
-#### ngrok container
+#### cloudflared container
 
-- **Image:** `ngrok/ngrok:latest`
-- **Network:** `network_mode: host` — shares the host machine's network directly
-- **What it does:** Dials out to ngrok's cloud servers and maintains a persistent tunnel. When a request arrives at the public URL, ngrok cloud sends it down the tunnel to this container, which forwards it to `localhost:8080`.
-- **Why `network_mode: host`:** Docker bridge networks on this server cannot route to external IPs for DNS. Host mode bypasses Docker networking entirely and uses the host's network stack, which can reach the internet.
-- **DNS override (`ngrok/resolv.conf`):** The ngrok image (Nix-based) ships its own `/etc/resolv.conf` pointing to `8.8.8.8`. This ISP blocks outbound UDP port 53 to public DNS servers, so `8.8.8.8` is unreachable. The custom file is mounted at `/etc/resolv.conf` inside the container, replacing it with `nameserver 192.168.1.254` (the local router), which is reachable.
+- **Image:** `cloudflare/cloudflared:latest`
+- **Network:** `home-server` bridge network
+- **What it does:** Dials out to Cloudflare's edge and maintains a persistent tunnel. When a request arrives at `dandelionlane.ca`, Cloudflare sends it down the tunnel to this container, which forwards it to `nginx-gateway` on the `home-server` network.
 - **Config (`.env`):**
-  - `NGROK_AUTHTOKEN` — authenticates the agent with your ngrok account
-  - `NGROK_API_DOMAIN` — the static domain to use for the tunnel
-- **Dashboard:** `http://<server-ip>:4040` — inspect active tunnels and live requests
+  - `CLOUDFLARE_TUNNEL_TOKEN` — authenticates the tunnel with your Cloudflare account (from the Cloudflare Zero Trust dashboard)
 
 #### nginx container (`nginx-gateway`)
 
@@ -274,10 +259,8 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
 | Decision | Why |
 |---|---|
 | nginx as a reverse proxy | Single public-facing entry point. The app only needs one hostname/port instead of separate addresses for REST and WebSocket. Easier to add more services later. |
-| ngrok for internet access | The home server is behind a NAT firewall with a dynamic public IP. ngrok's outbound tunnel bypasses both without requiring router port-forwarding or a static IP. |
-| Static ngrok domain | A random ngrok URL changes on every restart. A static domain is permanent — the mobile app can be hardcoded to it. |
-| `network_mode: host` for ngrok | Docker bridge networks cannot reach external DNS (`8.8.8.8` blocked by ISP). Host network mode lets ngrok use the host's networking directly. |
-| Custom `ngrok/resolv.conf` | Even in host mode, the ngrok image brings its own `/etc/resolv.conf` pointing to `8.8.8.8`. Overriding it with `192.168.1.254` (local router DNS) fixes name resolution. |
+| Cloudflare Tunnel for internet access | The home server is behind a NAT firewall with a dynamic public IP. Cloudflare's outbound tunnel bypasses both without requiring router port-forwarding or a static IP. |
+| Custom domain (`dandelionlane.ca`) | A permanent domain managed via Cloudflare DNS — the mobile app can be hardcoded to it. |
 | `host.docker.internal` in nginx | `homeserver.api` and `homewebsocket.api` are separate Docker Compose projects. They join the `home-server` network but their service names aren't available to nginx at startup. Reaching them via host ports is simpler and works regardless of startup order. |
 
 ---
@@ -289,21 +272,18 @@ ngrok   — punches through the firewall, gives a permanent public HTTPS URL
 Required to start the stack:
 
 ```
-NGROK_AUTHTOKEN=<from dashboard.ngrok.com → Authtokens>
-NGROK_API_DOMAIN=<your-static-domain.ngrok-free.app>
+CLOUDFLARE_TUNNEL_TOKEN=<from Cloudflare Zero Trust dashboard → Tunnels>
 ```
-
-Both values come from your ngrok account. The authtoken and domain must belong to the **same** ngrok account — using a token from one account with a domain from another will cause the tunnel to fail silently.
 
 ### `HomeApp/.env` (mobile app)
 
-To route the app through ngrok (required when away from home):
+To route the app through Cloudflare (required when away from home):
 
 ```
-REACT_APP_DOMAIN=your-domain.ngrok-free.app
+REACT_APP_DOMAIN=dandelionlane.ca
 ```
 
-When this is set, all REST and WebSocket traffic goes through ngrok. When it is commented out, the app connects directly to `192.168.1.14` on the local network.
+When this is set, all REST and WebSocket traffic goes through Cloudflare. When it is commented out, the app connects directly to `192.168.1.14` on the local network.
 
 ### Docker secrets
 
@@ -320,13 +300,11 @@ secrets/mongo_root_password.txt
 
 ## Troubleshooting
 
-### ngrok tunnel not connecting
+### Cloudflare tunnel not connecting
 
-1. Check logs: `docker compose logs ngrok -f`
-2. Check active tunnels: `curl http://localhost:4040/api/tunnels`
-3. Test DNS from host: `nslookup connect.ngrok-agent.com 192.168.1.254`
-4. Verify `.env` has both `NGROK_AUTHTOKEN` and `NGROK_API_DOMAIN`
-5. Verify both values are from the **same** ngrok account
+1. Check logs: `docker compose logs cloudflared -f`
+2. Verify `.env` has `CLOUDFLARE_TUNNEL_TOKEN`
+3. Check tunnel status in the Cloudflare Zero Trust dashboard
 
 ### nginx can't reach backend services
 
@@ -339,8 +317,4 @@ If these fail, check that `homeserver.api` and `homewebsocket.api` are running a
 
 ### Inspect live traffic
 
-The ngrok dashboard shows every HTTP request passing through the tunnel in real time:
-
-```
-http://<server-ip>:4040
-```
+Use the Cloudflare Zero Trust dashboard to inspect tunnel status and traffic metrics.
