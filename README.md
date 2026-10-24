@@ -37,7 +37,7 @@ docker compose up -d
 | `mosquitto` | eclipse-mosquitto | 1883, 9001 | MQTT broker |
 | `node-red` | nodered/node-red | 1880 | Flow-based automation UI |
 | `nginx-gateway` | nginx | 8080 | Reverse proxy — routes HTTP + WebSocket |
-| `cloudflared` | cloudflare/cloudflared | — | Exposes nginx to the internet via Cloudflare Tunnel (dandelionlane.ca) |
+| `cloudflared` | cloudflare/cloudflared | — | Exposes nginx to the internet via Cloudflare Tunnel (example.com) |
 
 ---
 
@@ -96,13 +96,13 @@ The home server sits on a private home network. Its IP address is not reachable 
 
 **Cloudflare Tunnel** solves this by creating a **tunnel**: a persistent outbound connection from your server to Cloudflare's edge. Since the connection is outbound (your server calls out to Cloudflare, not the other way around), it passes through the firewall. Cloudflare then accepts inbound traffic on your custom domain and forwards it down the tunnel to your server.
 
-**Custom domain** — `dandelionlane.ca` is a permanent domain managed via Cloudflare DNS. The mobile app is hardcoded to this address.
+**Custom domain** — `example.com` is a permanent domain managed via Cloudflare DNS. The mobile app is hardcoded to this address.
 
 ### DNS
 
 **DNS (Domain Name System)** translates human-readable domain names into IP addresses that computers use to connect to each other.
 
-**DNS server** — The server that does the translation. Your home router (`192.168.1.254`) acts as a local DNS server and forwards requests to your ISP's DNS upstream.
+**DNS server** — The server that does the translation. Your home router (`192.168.x.x`) acts as a local DNS server and forwards requests to your ISP's DNS upstream.
 
 ---
 
@@ -120,7 +120,7 @@ The solution:
 
 ```
 nginx       — single entry point, routes /ws to WebSocket and /* to REST
-cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
+cloudflared — punches through the firewall, exposes nginx at example.com
 ```
 
 ---
@@ -135,12 +135,12 @@ cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
   HomeApp reads REACT_APP_DOMAIN from .env
 
   If set:
-    REST calls  → https://dandelionlane.ca/api
-    WebSocket   → wss://dandelionlane.ca/ws
+    REST calls  → https://example.com/api
+    WebSocket   → wss://example.com/ws
 
   If NOT set (LAN only):
-    REST calls  → http://192.168.1.14:5001/
-    WebSocket   → ws://192.168.1.14:8765
+    REST calls  → http://192.168.x.x:5001/
+    WebSocket   → ws://192.168.x.x:8765
 
 
          │  HTTPS request  (e.g. GET /irrigations/zones)
@@ -153,11 +153,11 @@ cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
   CLOUDFLARE EDGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Receives traffic at dandelionlane.ca.
+  Receives traffic at example.com.
   Forwards it down the persistent tunnel to the cloudflared agent
   running on the home server.
 
-  Public URL:   https://dandelionlane.ca
+  Public URL:   https://example.com
   Terminates TLS here — traffic inside the tunnel is plain HTTP.
 
          │  HTTP (unencrypted, inside encrypted tunnel)
@@ -165,7 +165,7 @@ cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
          ▼
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  HOME SERVER  (dandelion-lane, 192.168.1.14)
+  HOME SERVER  (home-server,192.168.x.x)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ┌──────────────────────────────────────────────────────────────┐
@@ -236,7 +236,7 @@ cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
 
 - **Image:** `cloudflare/cloudflared:latest`
 - **Network:** `home-server` bridge network
-- **What it does:** Dials out to Cloudflare's edge and maintains a persistent tunnel. When a request arrives at `dandelionlane.ca`, Cloudflare sends it down the tunnel to this container, which forwards it to `nginx-gateway` on the `home-server` network.
+- **What it does:** Dials out to Cloudflare's edge and maintains a persistent tunnel. When a request arrives at `example.com`, Cloudflare sends it down the tunnel to this container, which forwards it to `nginx-gateway` on the `home-server` network.
 - **Config (`.env`):**
   - `CLOUDFLARE_TUNNEL_TOKEN` — authenticates the tunnel with your Cloudflare account (from the Cloudflare Zero Trust dashboard)
 
@@ -260,14 +260,14 @@ cloudflared — punches through the firewall, exposes nginx at dandelionlane.ca
 |---|---|
 | nginx as a reverse proxy | Single public-facing entry point. The app only needs one hostname/port instead of separate addresses for REST and WebSocket. Easier to add more services later. |
 | Cloudflare Tunnel for internet access | The home server is behind a NAT firewall with a dynamic public IP. Cloudflare's outbound tunnel bypasses both without requiring router port-forwarding or a static IP. |
-| Custom domain (`dandelionlane.ca`) | A permanent domain managed via Cloudflare DNS — the mobile app can be hardcoded to it. |
+| Custom domain (`example.com`) | A permanent domain managed via Cloudflare DNS — the mobile app can be hardcoded to it. |
 | `host.docker.internal` in nginx | `homeserver.api` and `homewebsocket.api` are separate Docker Compose projects. They join the `home-server` network but their service names aren't available to nginx at startup. Reaching them via host ports is simpler and works regardless of startup order. |
 
 ---
 
 ## Configuration
 
-### `home-server/.env`
+### `.env`
 
 Required to start the stack:
 
@@ -280,10 +280,10 @@ CLOUDFLARE_TUNNEL_TOKEN=<from Cloudflare Zero Trust dashboard → Tunnels>
 To route the app through Cloudflare (required when away from home):
 
 ```
-REACT_APP_DOMAIN=dandelionlane.ca
+REACT_APP_DOMAIN=example.com
 ```
 
-When this is set, all REST and WebSocket traffic goes through Cloudflare. When it is commented out, the app connects directly to `192.168.1.14` on the local network.
+When this is set, all REST and WebSocket traffic goes through Cloudflare. When it is commented out, the app connects directly to `192.168.x.x` on the local network.
 
 ### Docker secrets
 
